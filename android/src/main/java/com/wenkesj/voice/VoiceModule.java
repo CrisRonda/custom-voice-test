@@ -12,7 +12,7 @@ import android.speech.RecognitionService;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -56,49 +56,49 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   int nextPosition = 0;
 
   private void saveRecording() {
-    try{
-      LameEncoder encoder = new LameEncoder(new javax.sound.sampled.AudioFormat(44100.0f, 16, 2, true, false), 256, MPEGMode.STEREO, Lame.QUALITY_HIGHEST, false);
+    // try{
+    //   LameEncoder encoder = new LameEncoder(new javax.sound.sampled.AudioFormat(44100.0f, 16, 2, true, false), 256, MPEGMode.STEREO, Lame.QUALITY_HIGHEST, false);
 
 
-      ByteArrayOutputStream mp3 = new ByteArrayOutputStream();
-      byte[] buffer = new byte[encoder.getPCMBufferSize()];
+    //   ByteArrayOutputStream mp3 = new ByteArrayOutputStream();
+    //   byte[] buffer = new byte[encoder.getPCMBufferSize()];
 
-      int bytesToTransfer = Math.min(buffer.length, soundBytes.length);
-      int bytesWritten;
-      int currentPcmPosition = 0;
+    //   int bytesToTransfer = Math.min(buffer.length, soundBytes.length);
+    //   int bytesWritten;
+    //   int currentPcmPosition = 0;
 
-      while (0 < (bytesWritten = encoder.encodeBuffer(soundBytes, currentPcmPosition, bytesToTransfer, buffer))) {
-        currentPcmPosition += bytesToTransfer;
-        bytesToTransfer = Math.min(buffer.length, soundBytes.length - currentPcmPosition);
-        Log.e("logmessage", "current position: " + currentPcmPosition);
-        mp3.write(buffer, 0, bytesWritten);
-      }
+    //   while (0 < (bytesWritten = encoder.encodeBuffer(soundBytes, currentPcmPosition, bytesToTransfer, buffer))) {
+    //     currentPcmPosition += bytesToTransfer;
+    //     bytesToTransfer = Math.min(buffer.length, soundBytes.length - currentPcmPosition);
+    //     Log.e("logmessage", "current position: " + currentPcmPosition);
+    //     mp3.write(buffer, 0, bytesWritten);
+    //   }
 
-      encoder.close();
+    //   encoder.close();
 
-      File file = new File("/storage/emulated/0/bajj/gtmm5.mp3");
-      if (!file.exists()) {
-        try {
-          file.createNewFile();
-        } catch (IOException e) {
-          e.printStackTrace();
-          Log.e("logmessage", "cannot create file");
-        }
+    //   File file = new File("/storage/emulated/0/bajj/gtmm5.mp3");
+    //   if (!file.exists()) {
+    //     try {
+    //       file.createNewFile();
+    //     } catch (IOException e) {
+    //       e.printStackTrace();
+    //       Log.e("logmessage", "cannot create file");
+    //     }
 
-        FileOutputStream stream = null;
-        try {
-          stream = new FileOutputStream("/storage/emulated/0/bajj/gtmm5.mp3");
-          stream.write(mp3.toByteArray());
-        } catch (FileNotFoundException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
+    //     FileOutputStream stream = null;
+    //     try {
+    //       stream = new FileOutputStream("/storage/emulated/0/bajj/gtmm5.mp3");
+    //       stream.write(mp3.toByteArray());
+    //     } catch (FileNotFoundException e) {
+    //       e.printStackTrace();
+    //     } catch (IOException e) {
+    //       e.printStackTrace();
+    //     }
 
-      }
-    }catch (Exception error){
-      Log.d("SAVE DATA ERROR", error.toString());
-    }
+    //   }
+    // }catch (Exception error){
+    //   Log.d("SAVE DATA ERROR", error.toString());
+    // }
   }
   // end record
 
@@ -120,7 +120,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       speech.destroy();
       speech = null;
     }
-    
+
     if(opts.hasKey("RECOGNIZER_ENGINE")) {
       switch (opts.getString("RECOGNIZER_ENGINE")) {
         case "GOOGLE": {
@@ -244,6 +244,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
           if (speech != null) {
             speech.stopListening();
           }
+          saveRecording();
           isRecognizing = false;
           callback.invoke(false);
         } catch(Exception e) {
@@ -263,6 +264,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
           if (speech != null) {
             speech.cancel();
           }
+          saveRecording();
           isRecognizing = false;
           callback.invoke(false);
         } catch(Exception e) {
@@ -282,6 +284,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
           if (speech != null) {
             speech.destroy();
           }
+          saveRecording();
           speech = null;
           isRecognizing = false;
           callback.invoke(false);
@@ -312,7 +315,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   @ReactMethod
   public void getSpeechRecognitionServices(Promise promise) {
     final List<ResolveInfo> services = this.reactContext.getPackageManager()
-        .queryIntentServices(new Intent(RecognitionService.SERVICE_INTERFACE), 0);
+            .queryIntentServices(new Intent(RecognitionService.SERVICE_INTERFACE), 0);
     WritableArray serviceNames = Arguments.createArray();
     for (ResolveInfo service : services) {
       serviceNames.pushString(service.serviceInfo.packageName);
@@ -334,8 +337,8 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   private void sendEvent(String eventName, @Nullable WritableMap params) {
     this.reactContext
-      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-      .emit(eventName, params);
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(eventName, params);
   }
 
   @Override
@@ -350,15 +353,17 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   public void onBufferReceived(byte[] buffer) {
     WritableMap event = Arguments.createMap();
     event.putBoolean("error", false);
-     System.arraycopy(buffer, 0, soundBytes, nextPosition, buffer.length); ;
-     nextPosition += buffer.length;
+    // System.arraycopy(buffer, 0, soundBytes, nextPosition, buffer.length); ;
+    // nextPosition += buffer.length;
     sendEvent("onSpeechRecognized", event);
+    Log.d("CRIS ====>", String.valueOf(buffer.length));
     Log.d("ASR", "onBufferReceived()");
   }
 
   @Override
   public void onEndOfSpeech() {
     WritableMap event = Arguments.createMap();
+    saveRecording();
     event.putBoolean("error", false);
     sendEvent("onSpeechEnd", event);
     Log.d("ASR", "onEndOfSpeech()");
