@@ -38,6 +38,9 @@ android {
 }
 
 buildscript {
+    repositories {
+        google()
+    }
     if (project == rootProject) {
         repositories {
             jcenter()
@@ -54,6 +57,8 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        google()
+        maven { url "https://jitpack.io" }
     }
 }
 
@@ -61,7 +66,10 @@ def supportVersion = rootProject.hasProperty('supportLibVersion') ? rootProject.
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation files('lib/sound.jar')
+    implementation files('lib/net.sourceforge.lame-3.98.4.jar')
     testImplementation 'junit:junit:4.12'
+    //noinspection GradleCompatible
     implementation "com.android.support:appcompat-v7:${supportVersion}"
     implementation 'com.facebook.react:react-native:+'
 }

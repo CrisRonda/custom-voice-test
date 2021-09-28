@@ -11,7 +11,8 @@ import android.speech.RecognitionListener;
 import android.speech.RecognitionService;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import androidx.annotation.NonNull;
+
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -27,12 +28,22 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
-
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import javax.annotation.Nullable;
+import javax.sound.sampled.AudioFormat;
+
+import net.sourceforge.lame.lowlevel.LameEncoder;
+import net.sourceforge.lame.mp3.Lame;
+import net.sourceforge.lame.mp3.MPEGMode;
+
 
 public class VoiceModule extends ReactContextBaseJavaModule implements RecognitionListener {
 
@@ -40,6 +51,56 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   private SpeechRecognizer speech = null;
   private boolean isRecognizing = false;
   private String locale = null;
+  //  record
+  private byte[] soundBytes;
+  int nextPosition = 0;
+
+  private void saveRecording() {
+    try{
+      LameEncoder encoder = new LameEncoder(new javax.sound.sampled.AudioFormat(44100.0f, 16, 2, true, false), 256, MPEGMode.STEREO, Lame.QUALITY_HIGHEST, false);
+
+
+      ByteArrayOutputStream mp3 = new ByteArrayOutputStream();
+      byte[] buffer = new byte[encoder.getPCMBufferSize()];
+
+      int bytesToTransfer = Math.min(buffer.length, soundBytes.length);
+      int bytesWritten;
+      int currentPcmPosition = 0;
+
+      while (0 < (bytesWritten = encoder.encodeBuffer(soundBytes, currentPcmPosition, bytesToTransfer, buffer))) {
+        currentPcmPosition += bytesToTransfer;
+        bytesToTransfer = Math.min(buffer.length, soundBytes.length - currentPcmPosition);
+        Log.e("logmessage", "current position: " + currentPcmPosition);
+        mp3.write(buffer, 0, bytesWritten);
+      }
+
+      encoder.close();
+
+      File file = new File("/storage/emulated/0/bajj/gtmm5.mp3");
+      if (!file.exists()) {
+        try {
+          file.createNewFile();
+        } catch (IOException e) {
+          e.printStackTrace();
+          Log.e("logmessage", "cannot create file");
+        }
+
+        FileOutputStream stream = null;
+        try {
+          stream = new FileOutputStream("/storage/emulated/0/bajj/gtmm5.mp3");
+          stream.write(mp3.toByteArray());
+        } catch (FileNotFoundException e) {
+          e.printStackTrace();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+      }
+    }catch (Exception error){
+      Log.d("SAVE DATA ERROR", error.toString());
+    }
+  }
+  // end record
 
   public VoiceModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -289,6 +350,8 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   public void onBufferReceived(byte[] buffer) {
     WritableMap event = Arguments.createMap();
     event.putBoolean("error", false);
+     System.arraycopy(buffer, 0, soundBytes, nextPosition, buffer.length); ;
+     nextPosition += buffer.length;
     sendEvent("onSpeechRecognized", event);
     Log.d("ASR", "onBufferReceived()");
   }
